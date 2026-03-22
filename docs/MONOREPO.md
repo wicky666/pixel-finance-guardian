@@ -6,7 +6,7 @@
 |------|------|------|
 | 仓库根目录 | `pixel-finance-guardian` | **用户端 Web**（Next.js App Router），主产品界面 |
 | `apps/api` | `@pfg/api` | **后端 API**（NestJS），当前为内存存储 + 可接 PostgreSQL |
-| `apps/admin` | `@pfg/admin` | **管理端**（Vite + React），MVP 只读列表 |
+| `apps/admin` | `@pfg/admin` | **管理端**（Vite + React），含总览、配置、运维任务工作台 |
 | `packages/config` | `@pfg/config` | **共享环境变量 schema**（Zod），占位与文档对齐 |
 | `packages/shared` | `@pfg/shared` | 共享类型（可继续扩展） |
 | `supabase/`、`db/migrations/` | — | 历史/独立 PG 迁移脚本 |
