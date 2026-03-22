@@ -17,5 +17,11 @@
     "paths": { "@/*": ["./*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "apps/api/**/*",
+    "apps/admin/**/*",
+    "packages/shared/**/*",
+    "packages/config/**/*"
+  ]
 }

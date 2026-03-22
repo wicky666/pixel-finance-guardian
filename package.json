@@ -2,16 +2,29 @@
   "name": "pixel-finance-guardian",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
+    "web:dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "api:dev": "npm run dev -w @pfg/api",
+    "api:build": "npm run build -w @pfg/api",
+    "admin:dev": "npm run dev -w @pfg/admin",
+    "admin:build": "npm run build -w @pfg/admin",
+    "clean": "node -e \"try{require('fs').rmSync('.next',{recursive:true});console.log('已清理 .next 缓存');}catch(e){console.log('无需清理');}\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",
     "clsx": "^2.1.1",
     "decimal.js": "^10.4.3",
+    "html2canvas": "^1.4.1",
     "next": "^15.5.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -28,6 +41,7 @@
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.16",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.0"
   }
 }

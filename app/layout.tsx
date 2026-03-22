@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
+import { TopNav } from "@/components/app";
 
 export const metadata: Metadata = {
-  title: "Pixel Finance Guardian",
+  title: "AI 成本模拟器",
   description:
-    "Math simulation and behavior review tool for cost analysis and decision impact.",
+    "先算清楚再决定的成本模拟与行为提醒工具。",
 };
 
 export default function RootLayout({
@@ -14,7 +15,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen bg-slate-50 text-slate-900">
+      <body className="antialiased min-h-screen bg-[#090d14] text-slate-100">
+        <TopNav />
         {children}
       </body>
     </html>
