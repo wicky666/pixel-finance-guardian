@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { ScenarioService } from "../scenario/scenario.service";
 import { ShadowService } from "../shadow/shadow.service";
+import { AuthService } from "../auth/auth.service";
+import type { SafeUser, UserRole } from "../auth/auth.types";
 
 export interface AdminFeatureFlags {
   scenarioWriteEnabled: boolean;
@@ -60,7 +62,8 @@ export interface UpdateAdminSettingsInput
 export class AdminService {
   constructor(
     private readonly scenarios: ScenarioService,
-    private readonly shadow: ShadowService
+    private readonly shadow: ShadowService,
+    private readonly auth: AuthService
   ) {}
 
   private settings: AdminSettings = {
@@ -164,7 +167,7 @@ export class AdminService {
     if (!job) {
       throw new Error(`Unknown job: ${id}`);
     }
-    const scenarioCount = this.scenarios.list(100).length;
+    const scenarioCount = this.scenarios.listAll(100).length;
     const latestShadow = this.shadow.latest();
     const now = new Date().toISOString();
     const messageMap: Record<string, string> = {
@@ -200,9 +203,35 @@ export class AdminService {
     return this.activity.slice(0, limit);
   }
 
+
+
+  listUsers() {
+    return this.auth.listUsers();
+  }
+
+  updateUserRole(actor: SafeUser, userId: string, role: UserRole) {
+    const next = this.auth.updateUserRole(actor, userId, role);
+    this.pushActivity({
+      type: "config",
+      title: "管理员调整用户角色",
+      detail: `${next.email} -> ${next.role}`,
+    });
+    return next;
+  }
+
+  updateUserStatus(actor: SafeUser, userId: string, status: "active" | "blocked") {
+    const next = this.auth.updateUserStatus(actor, userId, status);
+    this.pushActivity({
+      type: "ops",
+      title: "管理员更新用户状态",
+      detail: `${next.email} -> ${next.status}`,
+    });
+    return next;
+  }
+
   getOverview() {
-    const scenarios = this.scenarios.list(100);
-    const shadows = this.shadow.list(100);
+    const scenarios = this.scenarios.listAll(100);
+    const shadows = this.shadow.listAll(100);
     const latestShadow = shadows[0] ?? null;
     const today = new Date().toISOString().slice(0, 10);
     const todayScenarioCount = scenarios.filter((item) => item.createdAt.startsWith(today)).length;

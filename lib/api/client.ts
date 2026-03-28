@@ -20,7 +20,7 @@ export async function apiGetJson<T>(path: string): Promise<{ ok: true; data: T }
   const base = getApiBaseUrl();
   if (!base) return { ok: false, status: 0, skipped: true };
   const url = `${base}/api${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url, { method: "GET", cache: "no-store" });
+  const res = await fetch(url, { method: "GET", cache: "no-store", credentials: "include" });
   if (!res.ok) return { ok: false, status: res.status };
   return { ok: true, data: (await res.json()) as T };
 }
@@ -35,6 +35,7 @@ export async function apiPostJson<TBody extends object, TRes>(
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(body),
   });
   if (!res.ok) return { ok: false, status: res.status };

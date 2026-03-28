@@ -7,11 +7,20 @@ import {
   Patch,
   Post,
   Query,
+  Req,
+  UseGuards,
 } from "@nestjs/common";
+import type { Request } from "express";
 import { UpdateAdminSettingsDto } from "./dto/update-admin-settings.dto";
 import { AdminService } from "./admin.service";
+import { AuthGuard } from "../auth/auth.guard";
+import { RolesGuard } from "../auth/roles.guard";
+import { Roles } from "../auth/roles.decorator";
+import type { SafeUser, UserRole } from "../auth/auth.types";
 
 @Controller("admin")
+@UseGuards(AuthGuard, RolesGuard)
+@Roles("admin", "super_admin")
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
@@ -50,5 +59,29 @@ export class AdminController {
   activity(@Query("limit") limit?: string) {
     const safeLimit = Number.isFinite(Number(limit)) ? Number(limit) : 20;
     return { items: this.admin.getActivity(safeLimit) };
+  }
+
+  @Get("users")
+  listUsers() {
+    return { items: this.admin.listUsers() };
+  }
+
+  @Post("users/:id/role")
+  @Roles("super_admin")
+  updateUserRole(
+    @Req() req: Request & { user: SafeUser },
+    @Param("id") id: string,
+    @Body() body: { role: UserRole }
+  ) {
+    return { item: this.admin.updateUserRole(req.user, id, body.role) };
+  }
+
+  @Post("users/:id/status")
+  updateUserStatus(
+    @Req() req: Request & { user: SafeUser },
+    @Param("id") id: string,
+    @Body() body: { status: "active" | "blocked" }
+  ) {
+    return { item: this.admin.updateUserStatus(req.user, id, body.status) };
   }
 }
