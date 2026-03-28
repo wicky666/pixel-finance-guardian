@@ -4,15 +4,19 @@ import { useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { generateDailyReview } from "@/lib/services";
 import type { ReviewStyle, ReviewTone } from "@/lib/services";
-import { PageLayout } from "@/components/app";
+import { AuthDialog, PageLayout } from "@/components/app";
 import { ComplianceNotice } from "@/components/compliance";
 import { PixelButton } from "@/components/ui";
+import { useAuthSession } from "@/lib/auth/useAuthSession";
 
 export default function ReportPage() {
   const [style, setStyle] = useState<ReviewStyle>("standard");
   const [tone, setTone] = useState<ReviewTone>("real");
   const [refreshKey, setRefreshKey] = useState(0);
   const [exporting, setExporting] = useState(false);
+  const [loginHint, setLoginHint] = useState("");
+  const [openLoginDialog, setOpenLoginDialog] = useState(false);
+  const { isLoggedIn, refresh } = useAuthSession();
   const cardRef = useRef<HTMLDivElement>(null);
   const review = useMemo(
     () => generateDailyReview(style, refreshKey, tone),
@@ -96,9 +100,16 @@ export default function ReportPage() {
           <PixelButton
             variant="primary"
             type="button"
-            onClick={() => setRefreshKey((v) => v + 1)}
+            onClick={() => {
+              if (!isLoggedIn) {
+                setLoginHint("登录后，这次记录可以保存下来");
+                setOpenLoginDialog(true);
+                return;
+              }
+              setRefreshKey((v) => v + 1);
+            }}
           >
-            生成复盘
+            生成今天的复盘
           </PixelButton>
           <PixelButton
             variant="neutral"
@@ -130,7 +141,9 @@ export default function ReportPage() {
           </PixelButton>
         </div>
 
+        {loginHint && <p className="text-sm text-sky-200">{loginHint}</p>}
         <ComplianceNotice variant="block" />
+      <AuthDialog open={openLoginDialog} onClose={() => setOpenLoginDialog(false)} onLoggedIn={() => void refresh()} />
       </div>
     </PageLayout>
   );

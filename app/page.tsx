@@ -1,11 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { analyzeDecision } from "@/lib/services";
 import type { DecisionAction, DecisionInputMode } from "@/lib/services";
-import { PageLayout } from "@/components/app";
+import { AuthDialog, PageLayout } from "@/components/app";
 import { isApiSyncEnabled } from "@/lib/api/client";
 import { syncScenarioToApi, syncShadowPairToApi } from "@/lib/api/syncScenario";
+import { useAuthSession } from "@/lib/auth/useAuthSession";
+import { getScenarios } from "@/lib/services/store";
 
 interface SymbolSuggestion {
   symbol: string;
@@ -33,6 +37,9 @@ export default function HomePage() {
   const [suggestions, setSuggestions] = useState<SymbolSuggestion[]>([]);
   const [quoteMsg, setQuoteMsg] = useState("");
   const [cashBudget, setCashBudget] = useState("");
+  const [openLoginDialog, setOpenLoginDialog] = useState(false);
+  const { isLoggedIn, refresh } = useAuthSession();
+  const router = useRouter();
 
   const floating = useMemo(() => {
     const qty = toNum(currentQuantity);
@@ -56,6 +63,8 @@ export default function HomePage() {
   );
 
   const canSave = tried && result.valid;
+  const today = new Date().toISOString().slice(0, 10);
+  const todaySaveCount = getScenarios().filter((item) => item.createdAt.slice(0, 10) === today).length;
   const qtyNum = toNum(currentQuantity);
   const costNum = toNum(costPrice);
   const currentNum = toNum(currentPrice);
@@ -189,8 +198,13 @@ export default function HomePage() {
 
   const onSave = async () => {
     if (!result.valid) return;
+    if (!isLoggedIn) {
+      setSavedMsg("登录后，这次记录可以保存下来。你也可以先本地试算。");
+      setOpenLoginDialog(true);
+      return;
+    }
     if (!isApiSyncEnabled()) {
-      setSavedMsg("请先配置后端并登录后再保存。当前版本已切换为服务端存储。");
+      setSavedMsg("当前环境未连接账户服务，你仍可先本地试算。");
       return;
     }
     const record = {
@@ -219,9 +233,9 @@ export default function HomePage() {
         addAmount: record.addAmount,
         newAverageCost: record.newAverageCost,
       });
-      setSavedMsg("已保留这次模拟，并同步到你的账号数据。可在管理端查看。请勿将其视为投资建议。");
+      setSavedMsg("已保存到你的记录。");
     } catch {
-      setSavedMsg("保存失败：请确认已登录且后端可用。");
+      setSavedMsg("保存失败：请稍后重试，记录还在当前页面。");
     }
   };
 
@@ -232,6 +246,35 @@ export default function HomePage() {
       description="这不是建议，只是把结果提前摆出来。"
     >
       <div className="mx-auto max-w-3xl space-y-5">
+        <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          {!isLoggedIn ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-slate-100">登录后，你的模拟和复盘会自动保存</p>
+                <p className="mt-1 text-xs text-slate-400">不登录也能体验，但记录不会绑定到账户。</p>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setOpenLoginDialog(true)} className="rounded-lg bg-sky-500 px-3 py-1.5 text-sm text-white hover:bg-sky-400">
+                  登录后保存
+                </button>
+                <button type="button" onClick={() => setSavedMsg("先体验也可以，等你准备好再登录保存。")} className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-slate-200">
+                  先体验
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-emerald-300">已为你保存到个人记录</p>
+                <p className="mt-1 text-xs text-slate-300">今天已记录 {todaySaveCount} 次操作</p>
+              </div>
+              <Link href="/my" className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-slate-200 hover:bg-white/5">
+                查看我的记录
+              </Link>
+            </div>
+          )}
+        </section>
+
         {/* 区块1：当前持仓 */}
         <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
           <h2 className="mb-3 text-base font-semibold">当前持仓</h2>
@@ -463,11 +506,20 @@ export default function HomePage() {
           )}
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" onClick={() => setTried(true)} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-medium text-white hover:bg-sky-400">
-              试着算一下
+              {isLoggedIn ? "先试着算一下" : "先本地试算"}
             </button>
             <button type="button" onClick={onSave} disabled={!canSave} className="rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-200 disabled:opacity-40">
-              保留这次模拟
+              {isLoggedIn ? "保存到我的记录" : "登录后保存"}
             </button>
+            {isLoggedIn ? (
+              <button type="button" onClick={() => router.push("/report")} className="rounded-lg border border-sky-500/40 px-3 py-2 text-sm text-sky-200">
+                生成今天的复盘
+              </button>
+            ) : (
+              <button type="button" onClick={() => { setSavedMsg("登录后，这次记录可以保存下来。") ; setOpenLoginDialog(true); }} className="rounded-lg border border-sky-500/40 px-3 py-2 text-sm text-sky-200">
+                生成今天的复盘
+              </button>
+            )}
           </div>
         </section>
 
@@ -499,6 +551,7 @@ export default function HomePage() {
           {savedMsg && <p className="mt-2 text-sm text-emerald-300">{savedMsg}</p>}
         </section>
       </div>
+      <AuthDialog open={openLoginDialog} onClose={() => setOpenLoginDialog(false)} onLoggedIn={() => void refresh()} />
     </PageLayout>
   );
 }
