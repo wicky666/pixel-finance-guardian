@@ -5,6 +5,7 @@ import { ScenarioModule } from "./scenario/scenario.module";
 import { ReviewModule } from "./review/review.module";
 import { QuoteModule } from "./quote/quote.module";
 import { ShadowModule } from "./shadow/shadow.module";
+import { AdminModule } from "./admin/admin.module";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ShadowModule } from "./shadow/shadow.module";
     ReviewModule,
     QuoteModule,
     ShadowModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

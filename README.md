@@ -11,7 +11,7 @@ Math simulation and behavior review tool. Cost analysis and decision impact—no
 - **Math:** decimal.js (all cost/finance calculations)
 - **Validation:** zod
 - **Backend:** NestJS（`apps/api`），可选 PostgreSQL / Redis / OSS（见 `.env.example`）
-- **Admin:** Vite + React（`apps/admin`），对齐 [aiforce](https://github.com/wicky666/aiforce-web) 三端拆分思路
+- **Admin:** Vite + React（`apps/admin`），对齐 aiforce 三端拆分思路，现已提供配置与运维控制台
 - **UI utilities:** clsx, tailwind-merge, react-hook-form
 
 ## Getting Started
@@ -39,13 +39,18 @@ API default:
 - `http://localhost:3100/api/health`
 - `http://localhost:3100/swagger`
 
-## Admin（管理端 MVP）
+## Admin（管理端）
 
 ```bash
 npm run admin:dev
 ```
 
 默认 [http://localhost:5173](http://localhost:5173)，通过 Vite 代理访问 `/api`。
+
+当前管理端能力：
+- 总览驾驶舱：查看 API 健康、模拟/影子对照指标、告警任务
+- 系统配置：环境、时区、默认复盘策略、功能开关、风控阈值
+- 运维作业：手动执行审计/同步/守卫任务，并查看活动时间线
 
 ## 文档导航
 
