@@ -3,3 +3,5 @@ export { PageLayout } from "./PageLayout";
 export { LoadingState } from "./LoadingState";
 export { EmptyState } from "./EmptyState";
 export { ErrorState } from "./ErrorState";
+
+export { AuthDialog } from "./AuthDialog";
