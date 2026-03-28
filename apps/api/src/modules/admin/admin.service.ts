@@ -205,6 +205,12 @@ export class AdminService {
 
 
 
+  async listUsers() {
+    return this.auth.listUsers();
+  }
+
+  async updateUserRole(actor: SafeUser, userId: string, role: UserRole) {
+    const next = await this.auth.updateUserRole(actor, userId, role);
   listUsers() {
     return this.auth.listUsers();
   }
@@ -219,6 +225,8 @@ export class AdminService {
     return next;
   }
 
+  async updateUserStatus(actor: SafeUser, userId: string, status: "active" | "blocked") {
+    const next = await this.auth.updateUserStatus(actor, userId, status);
   updateUserStatus(actor: SafeUser, userId: string, status: "active" | "blocked") {
     const next = this.auth.updateUserStatus(actor, userId, status);
     this.pushActivity({

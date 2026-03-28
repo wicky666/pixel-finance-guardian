@@ -1,8 +1,10 @@
+import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
+import { parseSessionId } from "./auth.guard";
 import { AuthGuard, parseSessionId } from "./auth.guard";
 import { RolesGuard } from "./roles.guard";
 import { Roles } from "./roles.decorator";
@@ -29,6 +31,13 @@ export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Post("register")
+  async register(@Body() body: RegisterDto) {
+    return { user: await this.auth.register(body.email, body.password) };
+  }
+
+  @Post("login")
+  async login(@Body() body: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.auth.login(body.email, body.password);
   register(@Body() body: RegisterDto) {
     return { user: this.auth.register(body.email, body.password) };
   }
@@ -41,6 +50,9 @@ export class AuthController {
   }
 
   @Post("logout")
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const sid = parseSessionId(req.headers.cookie);
+    if (sid) await this.auth.logout(sid);
   logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const sid = parseSessionId(req.headers.cookie);
     if (sid) this.auth.logout(sid);
@@ -49,6 +61,11 @@ export class AuthController {
   }
 
   @Get("me")
+  async me(@Req() req: Request) {
+    const sid = parseSessionId(req.headers.cookie);
+    const user = await this.auth.getUserBySession(sid);
+    return { user };
+  }
   me(@Req() req: Request) {
     const sid = parseSessionId(req.headers.cookie);
     const user = this.auth.getUserBySession(sid);

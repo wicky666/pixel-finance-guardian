@@ -16,6 +16,10 @@ function parseSessionId(cookieHeader?: string): string | null {
 export class AuthGuard implements CanActivate {
   constructor(private readonly auth: AuthService) {}
 
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const req = context.switchToHttp().getRequest<{ headers: Record<string, string | undefined>; user?: unknown }>();
+    const sid = parseSessionId(req.headers?.cookie);
+    const user = await this.auth.getUserBySession(sid);
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest<{ headers: Record<string, string | undefined>; user?: unknown }>();
     const sid = parseSessionId(req.headers?.cookie);
