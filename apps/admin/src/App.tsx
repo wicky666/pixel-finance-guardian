@@ -98,6 +98,7 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const base = apiBase();
   const url = base ? `${base}/api${path}` : `/api${path}`;
   const res = await fetch(url, {
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
@@ -160,6 +161,10 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>("正在载入管理台数据…");
   const [error, setError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authed, setAuthed] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const recentScenarioRatio = useMemo(() => {
     if (!overview) return "—";
@@ -191,8 +196,58 @@ export default function App() {
   }
 
   useEffect(() => {
-    void loadAll();
+    void (async () => {
+      try {
+        const me = await fetchJson<{ user: { id: string } | null }>("/auth/me");
+        if (me.user) {
+          setAuthed(true);
+          await loadAll();
+        } else {
+          setAuthed(false);
+        }
+      } catch {
+        setAuthed(false);
+      } finally {
+        setAuthLoading(false);
+      }
+    })();
   }, []);
+
+
+
+  async function login(mode: "login" | "register") {
+    try {
+      if (!email || !password) {
+        setError("请输入邮箱和密码");
+        return;
+      }
+      if (mode === "register") {
+        await fetchJson("/auth/register", {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        });
+      }
+      await fetchJson("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      setAuthed(true);
+      setError(null);
+      await loadAll();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "登录失败");
+    }
+  }
+
+  async function logout() {
+    try {
+      await fetchJson("/auth/logout", { method: "POST" });
+    } finally {
+      setAuthed(false);
+      setOverview(null);
+      setHealth(null);
+    }
+  }
 
   async function saveSettings() {
     setSaving(true);
@@ -240,6 +295,32 @@ export default function App() {
     }
   }
 
+  if (authLoading) {
+    return <div className="shell"><main className="content"><p>正在检查登录状态…</p></main></div>;
+  }
+
+  if (!authed) {
+    return (
+      <div className="shell">
+        <main className="content">
+          <section className="panel">
+            <h2>管理台登录</h2>
+            <p className="muted">请先登录管理员账号。首次可先注册普通账号，再由 super_admin 提权。</p>
+            <div className="grid" style={{ gap: 12, maxWidth: 420 }}>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="邮箱" />
+              <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="密码（至少 8 位）" />
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => void login("login")}>登录</button>
+                <button onClick={() => void login("register")}>注册并登录</button>
+              </div>
+              {error ? <p className="error">{error}</p> : null}
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -255,6 +336,7 @@ export default function App() {
           <a href="#settings">系统配置</a>
           <a href="#ops">运维作业</a>
           <a href="#data">业务数据</a>
+          <button onClick={() => void logout()}>退出登录</button>
         </nav>
         <div className="status-panel">
           <span className="status-dot" />

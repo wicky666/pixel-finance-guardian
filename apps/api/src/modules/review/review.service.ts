@@ -95,7 +95,7 @@ export class ReviewService {
   constructor(private readonly scenarios: ScenarioService) {}
 
   generate(style: ReviewStyle, seed: number, tone: ReviewTone): DailyReviewContent {
-    const list = this.scenarios.list(100);
+    const list = this.scenarios.listAll(100);
     const { frequent, urgent } = analyzeFromScenarios(list);
     const todayCount = list.length;
     const latest = list[0];

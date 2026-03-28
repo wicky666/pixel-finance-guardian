@@ -1,11 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  analyzeDecision,
-  createRealShadowFromScenario,
-  saveScenario,
-} from "@/lib/services";
+import { analyzeDecision } from "@/lib/services";
 import type { DecisionAction, DecisionInputMode } from "@/lib/services";
 import { PageLayout } from "@/components/app";
 import { isApiSyncEnabled } from "@/lib/api/client";
@@ -191,9 +187,15 @@ export default function HomePage() {
     }
   };
 
-  const onSave = () => {
+  const onSave = async () => {
     if (!result.valid) return;
-    const record = saveScenario({
+    if (!isApiSyncEnabled()) {
+      setSavedMsg("请先配置后端并登录后再保存。当前版本已切换为服务端存储。");
+      return;
+    }
+    const record = {
+      id: crypto.randomUUID?.() ?? `s-${Date.now()}`,
+      createdAt: new Date().toISOString(),
       symbol: symbol.trim() || "SIM",
       currentQuantity: currentQuantity || "0",
       currentAverageCost: costPrice || "0",
@@ -203,20 +205,11 @@ export default function HomePage() {
       newAverageCost: result.newAverageCost === "—" ? costPrice || "0" : result.newAverageCost,
       costImprovementEfficiency: "0",
       breakevenReboundPct: "0",
-    });
-    createRealShadowFromScenario({
-      id: record.id,
-      symbol: record.symbol,
-      currentQuantity: record.currentQuantity,
-      currentAverageCost: record.currentAverageCost,
-      currentPrice: record.currentPrice,
-      addQuantity: record.addQuantity,
-      addAmount: record.addAmount,
-      newAverageCost: record.newAverageCost,
-    });
-    if (isApiSyncEnabled()) {
-      void syncScenarioToApi(record);
-      void syncShadowPairToApi({
+    };
+
+    try {
+      await syncScenarioToApi(record);
+      await syncShadowPairToApi({
         id: record.id,
         symbol: record.symbol,
         currentQuantity: record.currentQuantity,
@@ -226,13 +219,12 @@ export default function HomePage() {
         addAmount: record.addAmount,
         newAverageCost: record.newAverageCost,
       });
-      setSavedMsg(
-        "已保留这次模拟，并已同步到后端（内存）。你可打开管理端查看记录。"
-      );
-    } else {
-      setSavedMsg("已保留这次模拟，你可以去“如果你当时没动”看看差异。");
+      setSavedMsg("已保留这次模拟，并同步到你的账号数据。可在管理端查看。请勿将其视为投资建议。");
+    } catch {
+      setSavedMsg("保存失败：请确认已登录且后端可用。");
     }
   };
+
 
   return (
     <PageLayout

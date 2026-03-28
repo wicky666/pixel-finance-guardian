@@ -13,6 +13,7 @@ export interface SnapshotPoint {
 
 export interface RealShadowPair {
   scenarioId: string;
+  userId: string;
   symbol: string;
   createdAt: string;
   real: SnapshotPoint;
@@ -24,21 +25,29 @@ export interface RealShadowPair {
   };
 }
 
-const MAX_PAIRS = 50;
+const MAX_PAIRS = 500;
 
 @Injectable()
 export class ShadowService {
   private pairs: RealShadowPair[] = [];
 
-  list(limit = 20): RealShadowPair[] {
+  listByUser(userId: string, limit = 20): RealShadowPair[] {
+    return this.pairs.filter((p) => p.userId === userId).slice(0, limit);
+  }
+
+  listAll(limit = 100): RealShadowPair[] {
     return this.pairs.slice(0, limit);
+  }
+
+  latestByUser(userId: string): RealShadowPair | null {
+    return this.pairs.find((p) => p.userId === userId) ?? null;
   }
 
   latest(): RealShadowPair | null {
     return this.pairs[0] ?? null;
   }
 
-  createFromScenario(input: CreateShadowDto): RealShadowPair {
+  createFromScenario(userId: string, input: CreateShadowDto): RealShadowPair {
     const now = new Date().toISOString();
     const q0 = new Decimal(input.currentQuantity);
     const c0 = new Decimal(input.currentAverageCost);
@@ -75,6 +84,7 @@ export class ShadowService {
 
     const pair: RealShadowPair = {
       scenarioId: input.id ?? randomUUID(),
+      userId,
       symbol: input.symbol.trim().toUpperCase(),
       createdAt: now,
       real: realPoint,
@@ -87,10 +97,7 @@ export class ShadowService {
           : 0,
       },
     };
-    this.pairs = [pair, ...this.pairs.filter((p) => p.scenarioId !== pair.scenarioId)].slice(
-      0,
-      MAX_PAIRS
-    );
+    this.pairs = [pair, ...this.pairs.filter((p) => p.scenarioId !== pair.scenarioId)].slice(0, MAX_PAIRS);
     return pair;
   }
 }
