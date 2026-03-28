@@ -20,6 +20,10 @@ export class AuthGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<{ headers: Record<string, string | undefined>; user?: unknown }>();
     const sid = parseSessionId(req.headers?.cookie);
     const user = await this.auth.getUserBySession(sid);
+  canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest<{ headers: Record<string, string | undefined>; user?: unknown }>();
+    const sid = parseSessionId(req.headers?.cookie);
+    const user = this.auth.getUserBySession(sid);
     if (!user) {
       throw new UnauthorizedException("请先登录");
     }

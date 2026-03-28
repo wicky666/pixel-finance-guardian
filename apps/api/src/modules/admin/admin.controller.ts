@@ -64,11 +64,14 @@ export class AdminController {
   @Get("users")
   async listUsers() {
     return { items: await this.admin.listUsers() };
+  listUsers() {
+    return { items: this.admin.listUsers() };
   }
 
   @Post("users/:id/role")
   @Roles("super_admin")
   async updateUserRole(
+  updateUserRole(
     @Req() req: Request & { user: SafeUser },
     @Param("id") id: string,
     @Body() body: { role: UserRole }
@@ -78,10 +81,16 @@ export class AdminController {
 
   @Post("users/:id/status")
   async updateUserStatus(
+    return { item: this.admin.updateUserRole(req.user, id, body.role) };
+  }
+
+  @Post("users/:id/status")
+  updateUserStatus(
     @Req() req: Request & { user: SafeUser },
     @Param("id") id: string,
     @Body() body: { status: "active" | "blocked" }
   ) {
     return { item: await this.admin.updateUserStatus(req.user, id, body.status) };
+    return { item: this.admin.updateUserStatus(req.user, id, body.status) };
   }
 }

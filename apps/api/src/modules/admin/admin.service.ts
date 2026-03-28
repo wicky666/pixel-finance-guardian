@@ -211,6 +211,12 @@ export class AdminService {
 
   async updateUserRole(actor: SafeUser, userId: string, role: UserRole) {
     const next = await this.auth.updateUserRole(actor, userId, role);
+  listUsers() {
+    return this.auth.listUsers();
+  }
+
+  updateUserRole(actor: SafeUser, userId: string, role: UserRole) {
+    const next = this.auth.updateUserRole(actor, userId, role);
     this.pushActivity({
       type: "config",
       title: "管理员调整用户角色",
@@ -221,6 +227,8 @@ export class AdminService {
 
   async updateUserStatus(actor: SafeUser, userId: string, status: "active" | "blocked") {
     const next = await this.auth.updateUserStatus(actor, userId, status);
+  updateUserStatus(actor: SafeUser, userId: string, status: "active" | "blocked") {
+    const next = this.auth.updateUserStatus(actor, userId, status);
     this.pushActivity({
       type: "ops",
       title: "管理员更新用户状态",
